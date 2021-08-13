@@ -1,0 +1,9 @@
+%{
+  "explorer": {:git, "https://github.com/amplifiedai/explorer.git", "5e420e745760f3fc0b921e353cb122e6e57b3364", [branch: "main"]},
+  "jason": {:hex, :jason, "1.2.2", "ba43e3f2709fd1aa1dce90aaabfd039d000469c05c56f0b8e31978e03fa39052", [:mix], [{:decimal, "~> 1.0 or ~> 2.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm", "18a228f5f0058ee183f29f9eae0805c6e59d61c3b006760668d8d18ff0d12179"},
+  "kino": {:hex, :kino, "0.3.0", "eef1db30d1d7b72fc0ad656d9f8d0fe62a8514f7baa83bcf7741fd5fa9a83087", [:mix], [{:ecto, "~> 3.0", [hex: :ecto, repo: "hexpm", optional: true]}, {:vega_lite, "~> 0.1.0", [hex: :vega_lite, repo: "hexpm", optional: true]}], "hexpm", "c875d23d4d05d1e8babb4f6ec66e6d8bbff131f95f840e5e0f25342be11e2712"},
+  "nx": {:git, "https://github.com/elixir-nx/nx.git", "24a7d2e4063c9edb1913c1d4f67f28346b2835ad", [branch: "main", sparse: "nx"]},
+  "rustler": {:hex, :rustler, "0.22.0", "e2930f9d6933e910f87526bb0a7f904e32b62a7e838a3ca4a884ee7fdfb957ed", [:mix], [{:toml, "~> 0.5.2", [hex: :toml, repo: "hexpm", optional: false]}], "hexpm", "01f5989dd511ebec09be481e07d3c59773d5373c5061e09d3ebc3ef61811b49d"},
+  "toml": {:hex, :toml, "0.5.2", "e471388a8726d1ce51a6b32f864b8228a1eb8edc907a0edf2bb50eab9321b526", [:mix], [], "hexpm", "f1e3dabef71fb510d015fad18c0e05e7c57281001141504c6b69d94e99750a07"},
+  "vega_lite": {:hex, :vega_lite, "0.1.0", "e55d0479f7088f817ad3ae087eb39195446a0df7f4eaa63078565b5a3a5fde24", [:mix], [], "hexpm", "4512f6841351b5b999c317dc1e47986422c873e64588404332efbbeda57f0573"},
+}

@@ -1,0 +1,309 @@
+# Explorer play pen
+
+## Installation
+
+Note that **packed_simd_2** library used by polars requres the **nighly build** of rust.
+
+If using **rustup**, you can install the nighly build with `rustup default nightly`.
+
+The nightly version is updated very frequently, so you might want to update it every week or more often with `rustup update`.
+
+If you want to go back to the stable version use the comment `rustup default stable`.
+
+```elixir
+Mix.install([
+  {:explorer, "~> 0.1.0-dev", github: "amplifiedai/explorer", branch: "main"},
+  {:vega_lite, "~> 0.1.0"},
+  {:kino, "~> 0.3.0"}
+])
+```
+
+### Default backend
+
+The default backend is stored only in the process dictionary. This means if you start a separate process, such as `Task`, the default backend must be set on the new process too.
+
+The default backend is `Explorer.PolarsBackend` which can be checked with the following command:
+
+```elixir
+Explorer.default_backend()
+```
+
+To change the default backend you would call the following:
+`Explorer.default_backend(Lib.CustomBackend)`
+Currently there is only one backend available using Polars. Future backends may include in-memory, remote databases or even Spark dataframes.
+
+```elixir
+alias Explorer.Series, as: Series
+alias Explorer.DataFrame, as: Df
+alias VegaLite, as: Vl
+```
+
+## Taking it for a spin
+
+Most of the functionality in Explorer is in `Explorer.DataFrame` and `Explorer.Series`.
+
+### Series
+
+A series is one-dimensional array. It can be of the following data types:
+
+* `:float` - 64-bit floating point number
+* `:integer` - 64-bit signed integer
+* `:boolean` - Boolean
+* `:string` - UTF-8 encoded binary
+* `:date` - Date type that unwraps to `Elixir.Date`
+* `:datetime` - DateTime type that unwraps to `Elixir.NaiveDateTime`
+
+A series must consist of a single data type only. Series are nullable, but may not consist only of `nils`.
+
+#### Creating a series
+
+The Series API has the following functions:
+
+* `from_list/2`
+* `from_tensor/2`
+
+The first parameter is the list or tensor (respectively). The second is optional and used for options.
+
+```elixir
+# A series of integers from a list
+Series.from_list([1, 2, 3])
+```
+
+```elixir
+# Series of floats with a null value
+Series.from_list([1.0, nil, 2.5, 3.1])
+```
+
+```elixir
+# Series of boolean
+Series.from_list([true, false, false, true])
+```
+
+```elixir
+# Series of dates
+Series.from_list([~D[2021-06-30], ~D[2021-08-02], ~D[2021-12-02]])
+```
+
+```elixir
+# Series of date-times
+[
+  ~N[2021-06-30 12:06:00.000000],
+  ~N[2021-08-02 10:06:00.000000],
+  ~N[2021-12-02 18:06:00.000000],
+  ~N[2021-12-31 11:59:00.000000]
+]
+|> Series.from_list()
+```
+
+```elixir
+# Series of strings
+
+words =
+  "I might not need Jupyter Labs or Jupyter Notebook or PANDAS anymore!"
+  |> String.split(" ")
+  |> Series.from_list()
+```
+
+### Explore the series
+
+```elixir
+# How long is the list of words?
+Series.length(words)
+```
+
+```elixir
+# How many unique words are there?
+words
+|> Series.distinct()
+|> Series.length()
+```
+
+```elixir
+# Lets count the number of occurances of each word
+
+# This converts it to a dataframe
+# the values column will contain the words and the counts column will show how many times those words occur.
+Explorer.Series.count(words)
+```
+
+```elixir
+# What is the data type of the Series?
+Explorer.Series.dtype(words)
+```
+
+```elixir
+# What is the first and last words?
+IO.inspect(Explorer.Series.first(words), label: "First")
+IO.inspect(Explorer.Series.last(words), label: "Last")
+```
+
+```elixir
+# Get the the second word
+# Index starts at 0 so the second word will be at 1
+
+Explorer.Series.fetch(words, 1)
+```
+
+```elixir
+# Get words 2, 3 and 4 using a range
+Explorer.Series.fetch(words, 1..3)
+```
+
+```elixir
+# Pop the 8th word
+# 0-index, so 8th word is at 7
+# The second occurance of Jupyter will be removed
+{value, words} = Series.pop(words, 4)
+```
+
+```elixir
+IO.inspect(value, label: "The popped value")
+IO.inspect(words, label: "The updated Series")
+```
+
+###
+
+### DataFrame
+
+```elixir
+# Create a dataframe from a map
+olympic_medal_count_map = %{
+  country: [
+    "United States of America",
+    "People's Republic of China",
+    "Japan",
+    "Great Britain",
+    "ROC",
+    "Australia"
+  ],
+  total_medals: [
+    113,
+    88,
+    58,
+    65,
+    71,
+    46
+  ]
+}
+
+olympic_medal_count_df = Df.from_map(olympic_medal_count_map)
+```
+
+```elixir
+# Names of the columns
+Df.names(olympic_medal_count_df)
+```
+
+```elixir
+# Data type in each columns
+Df.dtypes(olympic_medal_count_df)
+```
+
+```elixir
+# Take the first two countries off the dataframe
+olympic_medal_count_df
+|> Df.take([0, 2])
+```
+
+```elixir
+# Which countries had over 50 medals?
+Df.filter(
+  olympic_medal_count_df,
+  Series.gt(olympic_medal_count_df["total_medals"], 50)
+)
+```
+
+```elixir
+# Which in our dataframe had less than 80?
+Df.filter(
+  olympic_medal_count_df,
+  Series.lt(olympic_medal_count_df["total_medals"], 80)
+)
+```
+
+```elixir
+# Which in our dataframe was equal to 46 medals?
+Df.filter(
+  olympic_medal_count_df,
+  Series.eq(olympic_medal_count_df["total_medals"], 46)
+)
+```
+
+```elixir
+# Filter using upper and lower limit
+# Chaining filters doesn't seem to work
+
+olympic_medal_count_df
+|> Df.filter(Series.gt(olympic_medal_count_df["total_medals"], 50))
+|> Df.filter(Series.lt(olympic_medal_count_df["total_medals"], 70))
+```
+
+```elixir
+# What was the maximum number of medals for a country?
+
+olympic_medal_count_df["total_medals"]
+|> Series.max()
+```
+
+```elixir
+# Lets sum the list of medals
+
+olympic_medal_count_df["total_medals"]
+|> Series.sum()
+```
+
+## Explore sample dataset
+
+```elixir
+# Load the fossil fuels dataset
+fossil_fuels_df = Explorer.Datasets.fossil_fuels()
+```
+
+```elixir
+# Filter to get the Australian data only
+
+aus_fossil_fuels_df =
+  fossil_fuels_df
+  |> Df.filter(Series.eq(fossil_fuels_df["country"], "AUSTRALIA"))
+```
+
+```elixir
+# Basic x and y series charting
+x = Series.to_list(aus_fossil_fuels_df["year"])
+y = Series.to_list(aus_fossil_fuels_df["total"])
+
+Vl.new(width: 600, height: 400, title: "Fossil fuels from Australia per annum")
+|> Vl.data_from_series(year: x, total: y)
+|> Vl.mark(:bar, corner_radius_top_left: 6, corner_radius_top_right: 6)
+|> Vl.encode_field(:x, "year", type: :ordinal, title: "Year")
+|> Vl.encode_field(:y, "total", type: :quantitative, title: "Total")
+```
+
+```elixir
+# What does the data look like in a table?
+aus_fossil_fuels_df
+|> Df.to_map()
+|> Kino.DataTable.new()
+```
+
+```elixir
+# Lets reshape and take another look
+reshaped_data =
+  aus_fossil_fuels_df
+  |> Df.pivot_longer(["year"], value_cols: &String.ends_with?(&1, "fuel"))
+  |> Df.to_map()
+
+reshaped_data
+|> Kino.DataTable.new()
+```
+
+```elixir
+# Now the data has been reshaped for Vega, visulise it with a stacked chart
+
+Vl.new(width: 600, height: 400, title: "Fossil fuels from Australia per annum")
+|> Vl.data_from_series(reshaped_data)
+|> Vl.mark(:bar, corner_radius_top_left: 6, corner_radius_top_right: 6)
+|> Vl.encode_field(:x, "year", type: :ordinal, title: "Year")
+|> Vl.encode_field(:y, "value", aggregate: "sum", title: "Total")
+|> Vl.encode_field(:color, "variable", title: "Fuel type")
+```
