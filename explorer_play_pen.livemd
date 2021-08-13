@@ -123,7 +123,17 @@ words
 
 # This converts it to a dataframe
 # the values column will contain the words and the counts column will show how many times those words occur.
-Explorer.Series.count(words)
+word_count = Explorer.Series.count(words)
+```
+
+```elixir
+# Show the word counts in a Kino.DataTable
+
+word_count = Df.to_map(word_count)
+
+Enum.zip(word_count[:values], word_count[:counts])
+|> Enum.map(fn {values, counts} -> %{"word" => values, "occurances" => counts} end)
+|> Kino.DataTable.new(keys: ["word", "occurances"])
 ```
 
 ```elixir
@@ -231,11 +241,13 @@ Df.filter(
 
 ```elixir
 # Filter using upper and lower limit
-# Chaining filters doesn't seem to work
+# As the filters will chnage the size of the returned dataframe,
+# you can anonymous functions to chain them together to get a valid result.
+# e.g. if your want total_medals > 50 and < 70, you would chain it as below.
 
 olympic_medal_count_df
-|> Df.filter(Series.gt(olympic_medal_count_df["total_medals"], 50))
-|> Df.filter(Series.lt(olympic_medal_count_df["total_medals"], 70))
+|> Df.filter(&Series.gt(&1["total_medals"], 50))
+|> Df.filter(&Series.lt(&1["total_medals"], 70))
 ```
 
 ```elixir
